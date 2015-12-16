@@ -5,7 +5,11 @@
 
 
 function varargout = tickleAC(opt, f, vLen, vPhiGouy, ...
-  mPhiFrf, mPrb, mOptGen, mRadFrc, lResp, mQuant, shotPrb, nDrive)
+  mPhiFrf, mPrb, mOptGen, mRadFrc, lResp, mQuant, shotPrb, nDrive, ...
+  nFieldTfAC)
+
+  % return tfAC as last return argument
+  isOutTfAC = nargin >= 12;
 
   % === Field Info
   vFrf = opt.vFrf;
@@ -60,6 +64,14 @@ function varargout = tickleAC(opt, f, vLen, vPhiGouy, ...
   noiseOpt  = zeros(Nout, Naf);
   noiseMech = zeros(Nin, Naf);
   
+  % is tfAC wanted?
+  if isOutTfAC
+   tfACout = zeros(Narf, 2 * numel(nFieldTfAC), Naf);
+   fieldExc = zeros(Narf, 1);
+   jAsbAC = [jAsb(nFieldTfAC), jAsb(Nfld + nFieldTfAC)];
+   fieldExc(jAsbAC) = 1;
+  end
+  
   % since this can take a while, let's time it
   tic;
   hWaitBar = [];
@@ -106,6 +118,16 @@ function varargout = tickleAC(opt, f, vLen, vPhiGouy, ...
     tfOptAC = (eyeNarf - mFF) \ (mOF * mInDrv); % inputs to ASB amplitudes
     mOpt(:, :, nAF) = -2 * mOut * tfOptAC;
     mMech(:, :, nAF) = (mInDrv - mOO * mInDrv - mFO * tfOptAC) \ mInDrv;
+    
+    % field TF matrix wanted?
+    if isOutTfAC
+      tfFld = (eyeNarf - mFF) \ fieldExc; % field-to-field TFs for specified inputs
+      
+      size(tfFld)
+      size(tfACout(:, :, nAF))
+      
+      tfACout(:, :, nAF) = tfFld(jAsbAC, :);
+    end
     
     %%% Quantum noise
     if isNoise
@@ -179,5 +201,9 @@ function varargout = tickleAC(opt, f, vLen, vPhiGouy, ...
   if isNoise
     varargout{3} = noiseOpt;
     varargout{4} = noiseMech;
+  end
+  
+  if isOut_tfAC
+    varargout{end + 1} = tfACout;
   end
 end

@@ -44,7 +44,7 @@
 % (see also tickle2, @Optickle/Optickle)
 
 
-function varargout = tickle(opt, pos, f, nDrive, tfType)
+function varargout = tickle(opt, pos, f, nDrive, tfType, nFieldOutTfAC)
 
   %%%%%%%%%%%%%%%%%%%%%%%%
   % Argument Handling
@@ -63,6 +63,9 @@ function varargout = tickle(opt, pos, f, nDrive, tfType)
     tfType = Optickle.tfPos;
   end
 
+  % fifth and sixth argument given, return tfAC as last return argument
+  isOutTfAC = nargin >= 5;
+
   % check tfType
   if ~(tfType == Optickle.tfPos || ...
       tfType == Optickle.tfPit || tfType == Optickle.tfYaw)
@@ -80,11 +83,11 @@ function varargout = tickle(opt, pos, f, nDrive, tfType)
     [fDC, sigDC] = tickle2(opt, pos, f, Optickle.tfPos, nDrive);
   else
     if ~isNoise
-      [fDC, sigDC, mInOut, mMech] = ...
-        tickle2(opt, pos, f, tfType, nDrive);
+      [fDC, sigDC, mInOut, mMech, tfACout] = ...
+        tickle2(opt, pos, f, tfType, nDrive, nFieldOutTfAC);
     else
-      [fDC, sigDC, mInOut, mMech, noiseOpt, noiseMech] = ...
-        tickle2(opt, pos, f, tfType, nDrive);
+      [fDC, sigDC, mInOut, mMech, noiseOpt, noiseMech, tfACout] = ...
+        tickle2(opt, pos, f, tfType, nDrive, nFieldOutTfAC);
     end
     sigAC = getProdTF(mInOut, mMech);
   end
@@ -101,5 +104,9 @@ function varargout = tickle(opt, pos, f, nDrive, tfType)
   if isNoise
     varargout{5} = noiseOpt;
     varargout{6} = noiseMech;
+  end
+  
+  if isAC && isOutTfAC
+      varargout{end + 1} = tfACout;
   end
 end
