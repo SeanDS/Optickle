@@ -66,8 +66,8 @@ function varargout = tickleAC(opt, f, vLen, vPhiGouy, ...
   
   % is tfAC wanted?
   if isOutTfAC
-   tfACout = zeros(Narf, 2 * numel(nFieldTfAC), Naf);
-   fieldExc = zeros(Narf, 1);
+   tfACout = zeros(2 * numel(nFieldTfAC), 2 * numel(nFieldTfAC), Naf);
+   fieldExc = zeros(numel(nFieldTfAC), 1);
    jAsbAC = [jAsb(nFieldTfAC), jAsb(Nfld + nFieldTfAC)];
    fieldExc(jAsbAC) = 1;
   end
@@ -121,11 +121,10 @@ function varargout = tickleAC(opt, f, vLen, vPhiGouy, ...
     
     % field TF matrix wanted?
     if isOutTfAC
-      tfFld = (eyeNarf - mFF) \ fieldExc; % field-to-field TFs for specified inputs
-      
-      size(tfFld)
-      size(tfACout(:, :, nAF))
-      
+      size(eyeNarf)
+      size(mFF)
+      size(fieldExc)
+      tfFld = (eyeNarf - mFF) \ fieldExc;
       tfACout(:, :, nAF) = tfFld(jAsbAC, :);
     end
     
