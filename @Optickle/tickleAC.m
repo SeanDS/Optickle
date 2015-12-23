@@ -66,8 +66,8 @@ function varargout = tickleAC(opt, f, vLen, vPhiGouy, ...
   
   % is tfAC wanted?
   if isOutTfAC
-   tfACout = zeros(2 * numel(nFieldTfAC), 2 * numel(nFieldTfAC), Naf);
-   fieldExc = zeros(numel(nFieldTfAC), 1);
+   tfACout = zeros(Narf, Naf);
+   fieldExc = zeros(Narf, 1);
    jAsbAC = [jAsb(nFieldTfAC), jAsb(Nfld + nFieldTfAC)];
    fieldExc(jAsbAC) = 1;
   end
@@ -121,11 +121,8 @@ function varargout = tickleAC(opt, f, vLen, vPhiGouy, ...
     
     % field TF matrix wanted?
     if isOutTfAC
-      size(eyeNarf)
-      size(mFF)
-      size(fieldExc)
       tfFld = (eyeNarf - mFF) \ fieldExc;
-      tfACout(:, :, nAF) = tfFld(jAsbAC, :);
+      tfACout(:, nAF) = tfFld;
     end
     
     %%% Quantum noise
@@ -202,7 +199,7 @@ function varargout = tickleAC(opt, f, vLen, vPhiGouy, ...
     varargout{4} = noiseMech;
   end
   
-  if isOut_tfAC
+  if isOutTfAC
     varargout{end + 1} = tfACout;
   end
 end
