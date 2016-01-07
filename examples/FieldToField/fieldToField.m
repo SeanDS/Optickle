@@ -10,24 +10,33 @@
 opt = optFP();
 
 % frequencies
-f = logspace(2, 5, 250);
+f = logspace(0, 5, 500);
 
 % carrier frequency (this is here in case you want to look at a second
 % carrier's fields)
-lambdaCarrier = 1064e-9;
+fCarrier = Optickle.c / 1064e-9;
+fRf1 = 20e6;
 
 % carrier RF index
-nCarrier = find(Optickle.matchFreqPol(opt, Optickle.c / lambdaCarrier, opt.polS));
+nCarrier = find(Optickle.matchFreqPol(opt, fCarrier, opt.polS));
+nRfUpper = find(Optickle.matchFreqPol(opt, fCarrier + fRf1, opt.polS));
 
 % link to inject at
 nInj = opt.getLinkNum('Laser', 'AM');
 
-% field injection indices
-nFieldOutTfAC = getInternalField(opt, nCarrier, nInj);
+% mirror DOF to drive
+nDrive = opt.getDriveNum('IX');
 
-%% Tickle
-[fDC, sigDC, sigAC, mMech, noiseAC, noiseMech, tfACout] = ...
-    opt.tickle([], f, [], Optickle.tfPos, nFieldOutTfAC);
+% field injection indices
+nFieldTfAC = getInternalField(opt, nCarrier, nInj);
+
+%% Get field-to-field TFs
+[~, ~, ~, ~, ~, ~, tfFFAC] = ...
+    opt.tickle([], f, [], Optickle.tfPos, Optickle.tfFF, nFieldTfAC);
+
+%% Get optic-to-field TFs
+[~, ~, ~, ~, ~, ~, tfOFAC] = ...
+    opt.tickle([], f, [], Optickle.tfPos, Optickle.tfOF);
 
 %% Plot
 Narf = opt.Nlink * length(opt.vFrf);
@@ -35,10 +44,18 @@ Narf = opt.Nlink * length(opt.vFrf);
 % internal field readout
 nReadout = getInternalField(opt, nCarrier, opt.getLinkNum('IX', 'REFL'));
 
-% combine upper and lower signal sidebands
-tfAC = tfACout(1 : Narf, :) .* conj(tfACout(Narf + 1 : end, :));
+% upper and lower signal sidebands
+tfFieldAClower = squeeze(tfFFAC(1 : Narf, :));
+tfFieldACupper = squeeze(conj(tfFFAC(Narf + 1 : end, :)));
 
-tf = squeeze(tfAC(nReadout, :));
+tfOpticAClower = squeeze(tfOFAC(1 : Narf, nDrive, :));
+tfOpticACupper = squeeze(tfOFAC(Narf + 1 : end, nDrive, :));
 
 figure;
-zplotlog(f, tf);
+%zplotlog(f, [tfFieldAClower(nReadout, :); tfFieldACupper(nReadout, :)]);
+zplotlog(f, tfFieldAClower(nReadout, :) .* conj(tfFieldACupper(nReadout, :)));
+title('Field-to-field');
+
+figure;
+zplotlog(f, [tfOpticAClower(nReadout, :); tfOpticACupper(nReadout, :)]);
+title('Optic-to-field');

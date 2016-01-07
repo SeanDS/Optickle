@@ -6,10 +6,7 @@
 
 function varargout = tickleAC(opt, f, vLen, vPhiGouy, ...
   mPhiFrf, mPrb, mOptGen, mRadFrc, lResp, mQuant, shotPrb, nDrive, ...
-  nFieldTfAC)
-
-  % return tfAC as last return argument
-  isOutTfAC = nargin >= 12;
+  fieldTfType, nFieldTfAC)
 
   % === Field Info
   vFrf = opt.vFrf;
@@ -65,11 +62,27 @@ function varargout = tickleAC(opt, f, vLen, vPhiGouy, ...
   noiseMech = zeros(Nin, Naf);
   
   % is tfAC wanted?
-  if isOutTfAC
-   tfACout = zeros(Narf, Naf);
-   fieldExc = zeros(Narf, 1);
-   jAsbAC = [jAsb(nFieldTfAC), jAsb(Nfld + nFieldTfAC)];
-   fieldExc(jAsbAC) = 1;
+  isOutTfAC = 0; % no, by default
+  
+  if fieldTfType > Optickle.tfNone
+    isOutTfAC = 1;
+  end
+  
+  if fieldTfType == Optickle.tfFF
+    % field-to-field TFs
+    tfACout = zeros(Narf, Naf);
+
+    % empty excitation vector
+    fieldExc = zeros(Narf, 1);
+
+    % excitation field indices (upper and lower sidebands)
+    jFfAsbAC = [jAsb(nFieldTfAC), jAsb(Nfld + nFieldTfAC)];
+
+    % set field excitations
+    fieldExc(jFfAsbAC) = 1;
+  elseif fieldTfType == Optickle.tfOF
+    % optic-to-field TFs
+    tfACout = zeros(Ndof, Ndrv, Naf); % this should really be number of drive outputs, not total number of drives
   end
   
   % since this can take a while, let's time it
@@ -121,8 +134,11 @@ function varargout = tickleAC(opt, f, vLen, vPhiGouy, ...
     
     % field TF matrix wanted?
     if isOutTfAC
-      tfFld = (eyeNarf - mFF) \ fieldExc;
-      tfACout(:, nAF) = tfFld;
+      if fieldTfType == Optickle.tfFF
+        tfACout(:, nAF) = (eyeNarf - mFF) \ fieldExc;
+      elseif fieldTfType == Optickle.tfOF
+        tfACout(:, :, nAF) = (eyeNdof - [mPhiOptGen; mRespRadFrc]) \ eyeNdof(:, jDrv);
+      end
     end
     
     %%% Quantum noise
@@ -201,5 +217,8 @@ function varargout = tickleAC(opt, f, vLen, vPhiGouy, ...
   
   if isOutTfAC
     varargout{end + 1} = tfACout;
+  else
+    % empty
+    varargout{end + 1} = [];
   end
 end

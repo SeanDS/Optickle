@@ -135,6 +135,11 @@ classdef Optickle < handle
     tf00 = 1;
     tf01 = 2;
     tf10 = 3;
+    
+    % field transfer function extraction types
+    tfNone = 0;
+    tfFF = 1;
+    tfOF = 2;
   end
   
   methods

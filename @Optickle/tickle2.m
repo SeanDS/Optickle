@@ -58,7 +58,7 @@
 % (see also @Optickle/Optickle, parpool)
 
 
-function varargout = tickle2(opt, pos, f, tfType, nDrive, nFieldOutTfAC)
+function varargout = tickle2(opt, pos, f, tfType, nDrive, fieldTfType, nFieldTfAC)
 
   % === Argument Handling
   if nargin < 2
@@ -72,6 +72,12 @@ function varargout = tickle2(opt, pos, f, tfType, nDrive, nFieldOutTfAC)
   end
   if nargin < 5
     nDrive = [];
+  end
+  if nargin < 6
+    fieldTfType = 0;
+  end
+  if nargin < 7
+    nFieldTfAC = [];
   end
   
   % return tfAC as last return argument
@@ -202,7 +208,7 @@ function varargout = tickle2(opt, pos, f, tfType, nDrive, nFieldOutTfAC)
         mPhiFrf, mPrb, mOptGen, mRadFrc, lResp, mQuant, shotPrb, nDrive);
     else
       [mOpt, mMech, tfACout] = tickleAC(opt, f, vLen, vPhiGouy, ...
-        mPhiFrf, mPrb, mOptGen, mRadFrc, lResp, mQuant, shotPrb, nDrive, nFieldOutTfAC);
+        mPhiFrf, mPrb, mOptGen, mRadFrc, lResp, mQuant, shotPrb, nDrive, fieldTfType, nFieldTfAC);
     end
   else
     % set the quantum scale
@@ -230,7 +236,7 @@ function varargout = tickle2(opt, pos, f, tfType, nDrive, nFieldOutTfAC)
         vPhiGouy, mPhiFrf, mPrb, mOptGen, mRadFrc, lResp, mQuant, shotPrb, nDrive);
     else
       [mOpt, mMech, noiseAC, noiseMech, tfACout] = tickleAC(opt, f, vLen, ...
-        vPhiGouy, mPhiFrf, mPrb, mOptGen, mRadFrc, lResp, mQuant, shotPrb, nDrive, nFieldOutTfAC);
+        vPhiGouy, mPhiFrf, mPrb, mOptGen, mRadFrc, lResp, mQuant, shotPrb, nDrive, fieldTfType, nFieldTfAC);
     end
   end
 
