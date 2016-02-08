@@ -28,43 +28,16 @@ nRfUpper = find(Optickle.matchFreqPol(opt, fCarrier + fRf, opt.polS));
 % number of audio frequencies to simulate
 Narf = opt.Nlink * length(opt.vFrf);
 
-% links to inject at
-nLnkLaser = opt.getLinkNum('Laser', 'AM');
-nLnkCavEnd = opt.getLinkNum('EX', 'IX');
-
-% laser field
-nFieldLaser = getInternalField(opt, nCarrier, nLnkLaser);
-
-% field injection indices
-nFieldTfAC = [ ...
-    getInternalField(opt, nCarrier, nLnkLaser), sqrt(100);
-    getInternalField(opt, nRfLower, nLnkLaser), sqrt(1);
-    getInternalField(opt, nRfUpper, nLnkLaser), sqrt(1);
-    %getInternalField(opt, nCarrier, nLnkCav), 1e-12;
-];
-
 % drive index
 nDrive = opt.getDriveNum('EX');
-
-% internal field readout
-nReadoutCarrier = getInternalField(opt, nCarrier, opt.getLinkNum('IX', 'REFL'));
-nReadoutRf = getInternalField(opt, nRfLower, opt.getLinkNum('IX', 'REFL'));
 
 %% Get field-to-field TFs
 
 % NOTE: with tickle2, the ndrive and tfType argument order is swapped!
 [~, ~, mOpt, ~, ~, ~, tfFFAC] = ...
-    opt.tickle2([], f, Optickle.tfPos, [], Optickle.tfFF, nFieldTfAC);
+    opt.tickle2([], f, Optickle.tfPos, [], Optickle.tfFF);
 %[~, ~, mOpt, ~, ~, ~, tfFFAC] = ...
-%    opt.tickle([], f, [], Optickle.tfPos, Optickle.tfFF, nFieldTfAC);
-
-% upper and lower signal sidebands
-%tfFieldAClower = squeeze(tfFFAC(1 : Narf, :));
-%tfFieldACupper = squeeze(conj(tfFFAC(Narf + 1 : end, :)));
-tfFFACa = squeeze(tfFFAC(nReadoutRf, nFieldLaser, :));
-
-%tfFFACa = tfFieldAClower(nReadout, :)';
-tfACa = getTF(mOpt, nREFLI, nAMDrive);
+%    opt.tickle([], f, [], Optickle.tfPos, Optickle.tfFF);
 
 %% Get optic-to-field TFs
 % [fDC, ~, sigAC, ~, ~, ~, tfOFAC] = ...
@@ -78,21 +51,21 @@ tfACa = getTF(mOpt, nREFLI, nAMDrive);
 % tfOFACa = tfOpticAClower(nReadoutRf, :)';
 % tfOForiginal = getTF(sigAC, nREFLI, nDrive);
 
-%% Calculate signal on PD
+%% Calculate TF
 
-nLnkFrom = opt.getLinkNum('TRANS', 'EX');
+nLnkFrom = opt.getLinkNum('REFL', 'MREFL');
 nLnkTo = opt.getLinkNum('MREFL', 'REFL');
 
 % internal field entering IFO at REFLI
 fldREFL = getInternalField(opt, nCarrier, nLnkTo);
 fldREFLalt = getInternalField(opt, nCarrier, nLnkFrom);
 
-sigREFLI = squeeze(tfFFAC(nLnkTo, nLnkFrom, :));
+tfREFLI = squeeze(tfFFAC(nLnkTo, nLnkFrom, :));
 
 %% Plot
 
 figure;
-zplotlog(f, [sigREFLI]);
+zplotlog(f, [tfREFLI]);
 legend('Field-to-field');
 
 % figure;

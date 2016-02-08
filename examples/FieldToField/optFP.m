@@ -1,8 +1,12 @@
 % Create an Optickle Fabry-Perot
 %
-% This is a modified version of the FabryPerot example. The only change is
-% to add a pickoff beamsplitter for REFL instead of just looking at the
-% back port of IX, so allow vacuum fluctuations to enter via the REFL sink.
+% This is a modified version of the FabryPerot example. The only changes
+% are:
+%    added a pickoff beamsplitter for REFL instead of just looking at the
+%    back port of IX, so allow vacuum fluctuations to enter via the REFL
+%    sink.
+%
+%    added non-unity loss at the sinks, to allow vacuum light to enter
 
 function opt = optFP
 
@@ -81,7 +85,7 @@ function opt = optFP
   opt.setCavityBasis('IX', 'EX');
   
   % add REFL optics
-  opt.addSink('REFL');
+  opt.addSink('REFL', 0.5);
   opt.addLink('MREFL', 'bkB', 'REFL', 'in', 2);
   opt.addLink('REFL', 'out', 'MREFL', 'bkA', 2);
   
@@ -90,7 +94,7 @@ function opt = optFP
   opt.addReadout('REFL', [fMod, phi]);
 
   % add TRANS probe
-  opt.addSink('TRANS');
+  opt.addSink('TRANS', 0.5);
   opt.addLink('EX', 'bk', 'TRANS', 'in', 2);
   opt.addProbeIn('TRANS_DC', 'TRANS', 'in', 0, 0);
   opt.addLink('TRANS', 'out', 'EX', 'bk', 2);

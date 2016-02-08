@@ -6,7 +6,7 @@
 
 function varargout = tickleAC(opt, f, vLen, vPhiGouy, ...
   mPhiFrf, mPrb, mOptGen, mRadFrc, lResp, mQuant, shotPrb, nDrive, ...
-  fieldTfType, nFieldTfAC)
+  fieldTfType)
 
   % === Field Info
   vFrf = opt.vFrf;
@@ -71,16 +71,6 @@ function varargout = tickleAC(opt, f, vLen, vPhiGouy, ...
   if fieldTfType == Optickle.tfFF
     % field-to-field TFs
     tfACout = zeros(Ndof, Ndof, Naf);
-
-    % empty excitation matrix (first column: field indices, second column:
-    % excitation)
-    fieldExc = zeros(Narf, 1);
-
-    % excitation field indices (upper and lower sidebands)
-    jFfAsbAC = [jAsb(nFieldTfAC(:, 1)), jAsb(Nfld + nFieldTfAC(:, 1))];
-
-    % set field excitations
-    fieldExc(jFfAsbAC) = [nFieldTfAC(:, 2), nFieldTfAC(:, 2)];
   elseif fieldTfType == Optickle.tfOF
     % optic-to-field TFs
     tfACout = zeros(Ndof, Ndrv, Naf); % this should really be number of drive outputs, not total number of drives
@@ -160,6 +150,7 @@ function varargout = tickleAC(opt, f, vLen, vPhiGouy, ...
         % Eq. 11
         mAC = [mFF, mOF; mFO, mZero];
         
+        % optical TFs
         tfACout(:, :, nAF) = inv(eyeNdof - mAC);
           
         %tfACout(:, :, nAF) = (eyeNarf - mFF) \ eyeNarf;
