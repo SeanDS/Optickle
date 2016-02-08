@@ -70,16 +70,17 @@ function varargout = tickleAC(opt, f, vLen, vPhiGouy, ...
   
   if fieldTfType == Optickle.tfFF
     % field-to-field TFs
-    tfACout = zeros(Narf, Naf);
+    tfACout = zeros(Ndof, Ndof, Naf);
 
-    % empty excitation vector
+    % empty excitation matrix (first column: field indices, second column:
+    % excitation)
     fieldExc = zeros(Narf, 1);
 
     % excitation field indices (upper and lower sidebands)
-    jFfAsbAC = [jAsb(nFieldTfAC), jAsb(Nfld + nFieldTfAC)];
+    jFfAsbAC = [jAsb(nFieldTfAC(:, 1)), jAsb(Nfld + nFieldTfAC(:, 1))];
 
     % set field excitations
-    fieldExc(jFfAsbAC) = 1;
+    fieldExc(jFfAsbAC) = [nFieldTfAC(:, 2), nFieldTfAC(:, 2)];
   elseif fieldTfType == Optickle.tfOF
     % optic-to-field TFs
     tfACout = zeros(Ndof, Ndrv, Naf); % this should really be number of drive outputs, not total number of drives
@@ -124,20 +125,50 @@ function varargout = tickleAC(opt, f, vLen, vPhiGouy, ...
     mFF = mPhiOptGen(:, jAsb);    % field-field
     mOF = mPhiOptGen(:, jDrv);    % optic-field
     
+    % mPhi = propagation phase matrix, Narf x Narf
+    % mOptGen = Narf x Ndof
+    % so mPhiOptGen is Narf x Narf * Narf x Ndof so maps fields to DoFs
+    % (DoFs are fields + mechanical drives)
+    
     mRespRadFrc = mResp * mRadFrc;
     mFO = mRespRadFrc(:, jAsb);   % field-optic
     mOO = mRespRadFrc(:, jDrv);   % optic-optic
     
-    tfOptAC = (eyeNarf - mFF) \ (mOF * mInDrv); % inputs to ASB amplitudes
+    % mFO is Ndrv x Narf
+    % mOO is Ndrv x Ndrv
+    
+    tfOptAC = (eyeNarf - mFF) \ (mOF * mInDrv); % drives to ASB amplitudes
     mOpt(:, :, nAF) = -2 * mOut * tfOptAC;
     mMech(:, :, nAF) = (mInDrv - mOO * mInDrv - mFO * tfOptAC) \ mInDrv;
+    
+    % mInDrv is eye(Ndrv)
+    % mOF maps fields to drives
+    % so tfOptAC maps fields to drives (Narf x Ndrv)
+    % mOut == mPrb (unless special output is requested)
+    % mPrb is Nprb x Narf
+    % mPrb maps fields to probes. This already contains coefficients for RF
+    % fields, etc.
+    % so mOpt is Nprb x Narf * Narf x Ndrv, so it maps drives to probes
+    % mMech also maps drives to probes
     
     % field TF matrix wanted?
     if isOutTfAC
       if fieldTfType == Optickle.tfFF
-        tfACout(:, nAF) = (eyeNarf - mFF) \ fieldExc;
+        % empty matrix representing lower right corner of Eq. 11 in manual
+        mZero = zeros(Ndrv, Ndrv);
+        
+        % Eq. 11
+        mAC = [mFF, mOF; mFO, mZero];
+        
+        tfACout(:, :, nAF) = inv(eyeNdof - mAC);
+          
+        %tfACout(:, :, nAF) = (eyeNarf - mFF) \ eyeNarf;
       elseif fieldTfType == Optickle.tfOF
-        tfACout(:, :, nAF) = (eyeNdof - [mPhiOptGen; mRespRadFrc]) \ eyeNdof(:, jDrv);
+        mDoFDrv = (eyeNdof - [mPhiOptGen; mRespRadFrc]) \ eyeNdof(:, jDrv);
+        %tfACout(:, :, nAF) = mMechField * mOpt(:, :, nAF);
+        % mDoFDrv is Ndof x Ndrv
+        
+        tfACout(:, :, nAF) = mDoFDrv * mOpt(:, :, nAF);
       end
     end
     
