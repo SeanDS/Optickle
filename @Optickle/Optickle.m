@@ -138,8 +138,9 @@ classdef Optickle < handle
     
     % field transfer function extraction types
     tfNone = 0;
-    tfFF = 1;
-    tfOF = 2;
+    tfFF = 1; % field to field
+    tfOF = 2; % optic (drive) to field
+    tfNF = 3; % noise injection to field
   end
   
   methods

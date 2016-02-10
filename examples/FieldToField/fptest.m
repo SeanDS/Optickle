@@ -7,6 +7,9 @@ f = logspace(0, 5, 500);
 
 opt = optFP();
 
+% number of degrees of freedom
+Ndof = 2 * length(opt.vFrf) * opt.Nlink + opt.Ndrive;
+
 %% Get drives
 nEXDrive = opt.getDriveNum('EX');
 
@@ -29,15 +32,23 @@ nRfUpper = find(Optickle.matchFreqPol(opt, fCarrier + fRf, opt.polS));
 Narf = opt.Nlink * length(opt.vFrf);
 
 % drive index
-nDrive = opt.getDriveNum('EX');
+nEX = opt.getDriveNum('EX');
 
-%% Get field-to-field TFs
+%% Get noise-to-field TFs
+
+nLnkREFLIn = opt.getLinkNum('REFL', 'MREFL');
+%nLnkREFLIn = opt.getLinkNum('TRANS', 'EX');
+fldREFLIn = getInternalField(opt, nCarrier, nLnkREFLIn);
+
+% fields to inject at
+fieldInj = zeros(Ndof, 1);
+fieldInj(fldREFLIn) = 1;
 
 % NOTE: with tickle2, the ndrive and tfType argument order is swapped!
-[~, ~, mOpt, ~, ~, ~, tfFFAC] = ...
-    opt.tickle2([], f, Optickle.tfPos, [], Optickle.tfFF);
-%[~, ~, mOpt, ~, ~, ~, tfFFAC] = ...
-%    opt.tickle([], f, [], Optickle.tfPos, Optickle.tfFF);
+[~, ~, sigAC, ~, ~, ~, tfNFAC] = ...
+    opt.tickle([], f, [], Optickle.tfPos, Optickle.tfNF, fieldInj);
+%[~, ~, mOpt, ~, ~, ~, tfNFAC] = ...
+%    opt.tickle2([], f, Optickle.tfPos, [], Optickle.tfNF, fieldInj);
 
 %% Get optic-to-field TFs
 % [fDC, ~, sigAC, ~, ~, ~, tfOFAC] = ...
@@ -53,20 +64,19 @@ nDrive = opt.getDriveNum('EX');
 
 %% Calculate TF
 
-nLnkFrom = opt.getLinkNum('REFL', 'MREFL');
-nLnkTo = opt.getLinkNum('MREFL', 'REFL');
+nLnkREFLOut = opt.getLinkNum('MREFL', 'REFL');
+fldREFLOut = getInternalField(opt, nCarrier, nLnkREFLOut);
 
-% internal field entering IFO at REFLI
-fldREFL = getInternalField(opt, nCarrier, nLnkTo);
-fldREFLalt = getInternalField(opt, nCarrier, nLnkFrom);
-
-tfREFLI = squeeze(tfFFAC(nLnkTo, nLnkFrom, :));
+tfREFLI = tfNFAC(fldREFLOut, :);
 
 %% Plot
 
 figure;
 zplotlog(f, [tfREFLI]);
-legend('Field-to-field');
+legend('Noise-to-field');
+
+figure;
+zplotlog(f, getTF(sigAC, nREFLI, nEX));
 
 % figure;
 % zplotlog(f, [tfOFACa, tfOForiginal]);

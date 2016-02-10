@@ -58,7 +58,7 @@
 % (see also @Optickle/Optickle, parpool)
 
 
-function varargout = tickle2(opt, pos, f, tfType, nDrive, fieldTfType)
+function varargout = tickle2(opt, pos, f, tfType, nDrive, fieldTfType, fieldInj)
 
   % === Argument Handling
   if nargin < 2
@@ -75,6 +75,9 @@ function varargout = tickle2(opt, pos, f, tfType, nDrive, fieldTfType)
   end
   if nargin < 6
     fieldTfType = 0;
+  end
+  if nargin < 7
+    fieldInj = [];
   end
   
   % return tfAC as last return argument
@@ -233,7 +236,7 @@ function varargout = tickle2(opt, pos, f, tfType, nDrive, fieldTfType)
         vPhiGouy, mPhiFrf, mPrb, mOptGen, mRadFrc, lResp, mQuant, shotPrb, nDrive);
     else
       [mOpt, mMech, noiseAC, noiseMech, tfACout] = tickleAC(opt, f, vLen, ...
-        vPhiGouy, mPhiFrf, mPrb, mOptGen, mRadFrc, lResp, mQuant, shotPrb, nDrive, fieldTfType);
+        vPhiGouy, mPhiFrf, mPrb, mOptGen, mRadFrc, lResp, mQuant, shotPrb, nDrive, fieldTfType, fieldInj);
     end
   end
 

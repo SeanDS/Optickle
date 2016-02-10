@@ -137,7 +137,7 @@ function [mOptGen, mRadFrc, lResp, mQuant] = ...
       % fill in with zeros
       mQrad = [zeros(Ndrv, size(mQuant_n, 2)), mDrv * mQuantRad_n];
     else
-      % mQuant_n DOES not have mechanical part
+      % mQuant_n DOES have mechanical part
       mQopt = mOutAC * [mQuant_n(1:NoutAC, :), mQuantCon_n];
       
       % use mechanical response from mQuant_n

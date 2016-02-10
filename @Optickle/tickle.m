@@ -44,7 +44,7 @@
 % (see also tickle2, @Optickle/Optickle)
 
 
-function varargout = tickle(opt, pos, f, nDrive, tfType, fieldTfType)
+function varargout = tickle(opt, pos, f, nDrive, tfType, fieldTfType, fieldInj)
 
   %%%%%%%%%%%%%%%%%%%%%%%%
   % Argument Handling
@@ -64,6 +64,9 @@ function varargout = tickle(opt, pos, f, nDrive, tfType, fieldTfType)
   end
   if nargin < 6
     fieldTfType = 0;
+  end
+  if nargin < 7
+    fieldInj = [];
   end
 
   % fifth and sixth argument given, return tfAC as last return argument
@@ -90,7 +93,7 @@ function varargout = tickle(opt, pos, f, nDrive, tfType, fieldTfType)
         tickle2(opt, pos, f, tfType, nDrive, fieldTfType);
     else
       [fDC, sigDC, mInOut, mMech, noiseOpt, noiseMech, tfACout] = ...
-        tickle2(opt, pos, f, tfType, nDrive, fieldTfType);
+        tickle2(opt, pos, f, tfType, nDrive, fieldTfType, fieldInj);
     end
     sigAC = getProdTF(mInOut, mMech);
   end
@@ -110,6 +113,6 @@ function varargout = tickle(opt, pos, f, nDrive, tfType, fieldTfType)
   end
   
   if isAC && isOutTfAC
-      varargout{end + 1} = tfACout;
+    varargout{end + 1} = tfACout;
   end
 end

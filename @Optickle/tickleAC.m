@@ -6,7 +6,7 @@
 
 function varargout = tickleAC(opt, f, vLen, vPhiGouy, ...
   mPhiFrf, mPrb, mOptGen, mRadFrc, lResp, mQuant, shotPrb, nDrive, ...
-  fieldTfType)
+  fieldTfType, fieldInj)
 
   % === Field Info
   vFrf = opt.vFrf;
@@ -74,6 +74,16 @@ function varargout = tickleAC(opt, f, vLen, vPhiGouy, ...
   elseif fieldTfType == Optickle.tfOF
     % optic-to-field TFs
     tfACout = zeros(Ndof, Ndrv, Naf); % this should really be number of drive outputs, not total number of drives
+  elseif fieldTfType == Optickle.tfNF
+    % noise-to-field TFs
+    
+    % check that fieldInj is the correct size
+    if size(fieldInj, 1) ~= Ndof
+      error('fieldInj must be of size Ndof x n (n >= 1)');
+    end
+        
+    % empty TF matrix
+    tfACout = zeros(Ndof, Naf);
   end
   
   % since this can take a while, let's time it
@@ -93,7 +103,10 @@ function varargout = tickleAC(opt, f, vLen, vPhiGouy, ...
     mPhip = Optickle.getPhaseMatrix(vLen, vFrf + fAudio, -vPhiGouy, mPhiFrf);
     mPhi = blkdiag(mPhim, conj(mPhip));
     
-    % mechanical response matrix
+    % mechanical response matrix, (Ndrv x Ndrv)
+    % lResp is the frequency response at each drive (Naf x Ndrv), i.e. the
+    % frequency response of the mechanical transfer function defined for
+    % each drive
     mResp = diag(lResp(nAF,:));
     
     %%%%%%%%%%%%% Reference Code (matches Optickle 1)
@@ -167,14 +180,35 @@ function varargout = tickleAC(opt, f, vLen, vPhiGouy, ...
     if isNoise
       % setup
       mDof = [mPhiOptGen; mRespRadFrc];
+      
+      % quantum noise injection at open/lossy ports
+      % mPhi = propagation phase matrix, Narf x Narf
+      % mResp = mechanical transfer matrix, Ndrv x Ndrv
+      % mechanical response matrix, diag(lResp(nAF,:))
+      % mQuant = quantum noise sources, Ndof x number of quantum noise
+      % sources (depends on number of open ports, etc.)
       mQinj = blkdiag(mPhi, mResp) * mQuant;
+      
+      % mNoise is the full noise matrix (from each vacuum fluctuation
+      % source to each DoF)
       mNoise = (eyeNdof - mDof) \ mQinj;
+      
       noisePrb = mOut * mNoise(jAsb, :);
       noiseDrv = mDrvIn * mNoise(jDrv, :);
       
       % incoherent sum of amplitude and phase noise
       noiseOpt(:, nAF) = sqrt(sum(abs(noisePrb).^2, 2) + shotPrb);
       noiseMech(:, nAF) = sqrt(sum(abs(noiseDrv).^2, 2));
+      
+      % field TF matrix wanted?
+      if isOutTfAC
+        if fieldTfType == Optickle.tfNF          
+          % calculate new noise due to injections
+          mNoiseAlt = (eyeNdof - mDof) \ fieldInj;
+          
+          tfACout(:, nAF) = mNoiseAlt;
+        end
+      end
     end
     
     % ==== Timing and User Interaction
