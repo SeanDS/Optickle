@@ -1,4 +1,8 @@
-function n = getInternalField(opt, nRf, nLink)
+% n = getFieldEvalNum(opt, nRf, nLink)
+%   get the internal field evaluation point used in Optickle's calculation
+%   of field amplitudes corresponding to the specified vFrf field and link
+
+function n = getFieldEvalNum(opt, nRf, nLink)
     % total number of links
     nLinkTotal = opt.Nlink;
     

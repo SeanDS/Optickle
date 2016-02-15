@@ -39,8 +39,8 @@ nEX = opt.getDriveNum('EX');
 nLnkREFLIn = opt.getLinkNum('REFL', 'MREFL');
 
 % carrier
-fldREFLCarrierIn = getInternalField(opt, nCarrier, nLnkREFLIn);
-fldREFLSidebandIn = getInternalField(opt, nRfUpper, nLnkREFLIn);
+fldREFLCarrierIn = opt.getFieldEvalNum(nCarrier, nLnkREFLIn);
+fldREFLSidebandIn = opt.getFieldEvalNum(nRfUpper, nLnkREFLIn);
 
 % fields to inject at
 fieldInjCarrier = zeros(Ndof, 1);
@@ -70,8 +70,8 @@ fieldInjSideband(fldREFLSidebandIn) = 1;
 
 nLnkREFLOut = opt.getLinkNum('MREFL', 'REFL');
 
-fldREFLCarrierOut = getInternalField(opt, nCarrier, nLnkREFLOut);
-fldREFLSidebandOut = getInternalField(opt, nRfUpper, nLnkREFLOut);
+fldREFLCarrierOut = opt.getFieldEvalNum(nCarrier, nLnkREFLOut);
+fldREFLSidebandOut = opt.getFieldEvalNum(nRfUpper, nLnkREFLOut);
 
 tfREFLICarrier = tfNFACCarrier(fldREFLCarrierOut, :);
 tfREFLISideband = tfNFACSideband(fldREFLSidebandOut, :);
