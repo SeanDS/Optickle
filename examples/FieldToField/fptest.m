@@ -37,18 +37,22 @@ nEX = opt.getDriveNum('EX');
 %% Get noise-to-field TFs
 
 nLnkREFLIn = opt.getLinkNum('REFL', 'MREFL');
-%nLnkREFLIn = opt.getLinkNum('TRANS', 'EX');
-fldREFLIn = getInternalField(opt, nCarrier, nLnkREFLIn);
+
+% carrier
+fldREFLCarrierIn = getInternalField(opt, nCarrier, nLnkREFLIn);
+fldREFLSidebandIn = getInternalField(opt, nRfUpper, nLnkREFLIn);
 
 % fields to inject at
-fieldInj = zeros(Ndof, 1);
-fieldInj(fldREFLIn) = 1;
+fieldInjCarrier = zeros(Ndof, 1);
+fieldInjCarrier(fldREFLCarrierIn) = 1;
+fieldInjSideband = zeros(Ndof, 1);
+fieldInjSideband(fldREFLSidebandIn) = 1;
 
-% NOTE: with tickle2, the ndrive and tfType argument order is swapped!
-[~, ~, sigAC, ~, ~, ~, tfNFAC] = ...
-    opt.tickle([], f, [], Optickle.tfPos, Optickle.tfNF, fieldInj);
-%[~, ~, mOpt, ~, ~, ~, tfNFAC] = ...
-%    opt.tickle2([], f, Optickle.tfPos, [], Optickle.tfNF, fieldInj);
+[~, ~, sigAC, ~, ~, ~, tfNFACCarrier] = ...
+    opt.tickle([], f, [], Optickle.tfPos, Optickle.tfNF, fieldInjCarrier);
+
+[~, ~, ~, ~, ~, ~, tfNFACSideband] = ...
+    opt.tickle([], f, [], Optickle.tfPos, Optickle.tfNF, fieldInjSideband);
 
 %% Get optic-to-field TFs
 % [fDC, ~, sigAC, ~, ~, ~, tfOFAC] = ...
@@ -65,18 +69,24 @@ fieldInj(fldREFLIn) = 1;
 %% Calculate TF
 
 nLnkREFLOut = opt.getLinkNum('MREFL', 'REFL');
-fldREFLOut = getInternalField(opt, nCarrier, nLnkREFLOut);
 
-tfREFLI = tfNFAC(fldREFLOut, :);
+fldREFLCarrierOut = getInternalField(opt, nCarrier, nLnkREFLOut);
+fldREFLSidebandOut = getInternalField(opt, nRfUpper, nLnkREFLOut);
+
+tfREFLICarrier = tfNFACCarrier(fldREFLCarrierOut, :);
+tfREFLISideband = tfNFACSideband(fldREFLSidebandOut, :);
 
 %% Plot
 
 figure;
-zplotlog(f, [tfREFLI]);
-legend('Noise-to-field');
+zplotlog(f, [tfREFLICarrier; tfREFLISideband]);
+title('REFL in -> REFL out');
+legend('Carrier', '(Upper) Sideband');
 
 figure;
 zplotlog(f, getTF(sigAC, nREFLI, nEX));
+title('EX -> REFL transfer function');
+ylabel('Response [W/m]');
 
 % figure;
 % zplotlog(f, [tfOFACa, tfOForiginal]);
